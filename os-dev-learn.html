@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSDevLearn — Belajar Bikin OS dari Nol</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #0f1626;
+    --bg3: #141d30;
+    --card: #161e2e;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --accent3: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --sidebar-w: 280px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* TOP NAV */
+  .topnav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(10,14,26,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 24px; height: 56px; gap: 16px;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 20px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    white-space: nowrap;
+  }
+  .logo span { color: var(--accent3); -webkit-text-fill-color: var(--accent3); }
+  .nav-badge {
+    background: var(--accent2); color: white;
+    font-size: 10px; font-weight: 700; padding: 2px 8px;
+    border-radius: 20px; letter-spacing: 1px; text-transform: uppercase;
+  }
+  .nav-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .progress-text { font-size: 12px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .progress-bar-mini {
+    width: 100px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;
+  }
+  .progress-bar-mini-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px; width: 0%; transition: width 0.5s ease;
+  }
+
+  /* LAYOUT */
+  .layout { display: flex; padding-top: 56px; min-height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: fixed; left: 0; top: 56px; bottom: 0;
+    width: var(--sidebar-w);
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 16px 0;
+    transition: transform 0.3s ease;
+    z-index: 50;
+  }
+  .sidebar-section { margin-bottom: 4px; }
+  .sidebar-header {
+    padding: 6px 20px;
+    font-size: 10px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 20px; cursor: pointer;
+    transition: all 0.15s; border-left: 3px solid transparent;
+    font-size: 13.5px; color: var(--text2);
+    text-decoration: none;
+  }
+  .sidebar-item:hover { background: var(--bg3); color: var(--text); border-left-color: var(--border); }
+  .sidebar-item.active { background: rgba(0,212,255,0.08); color: var(--accent); border-left-color: var(--accent); }
+  .sidebar-item.done { color: var(--green); }
+  .sidebar-item.done .s-icon { color: var(--green); }
+  .s-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+  .s-badge {
+    margin-left: auto; font-size: 10px; padding: 1px 6px;
+    border-radius: 10px; font-family: 'JetBrains Mono', monospace;
+  }
+  .s-badge.new { background: rgba(124,58,237,0.3); color: var(--accent2); }
+  .s-badge.done { background: rgba(16,185,129,0.2); color: var(--green); }
+
+  /* MAIN */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1; padding: 40px 48px;
+    max-width: calc(100% - var(--sidebar-w));
+  }
+
+  /* PAGE */
+  .page { display: none; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, rgba(0,212,255,0.05), rgba(124,58,237,0.08));
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 48px;
+    margin-bottom: 40px; position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: -50%; right: -10%;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(0,212,255,0.06), transparent 70%);
+    pointer-events: none;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: rgba(0,212,255,0.1); color: var(--accent);
+    border: 1px solid rgba(0,212,255,0.2);
+    font-size: 11px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; padding: 4px 12px; border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace; margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 40px; font-weight: 800; line-height: 1.2;
+    margin-bottom: 16px;
+  }
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p { color: var(--text2); font-size: 16px; max-width: 600px; margin-bottom: 28px; }
+  .hero-stats { display: flex; gap: 32px; flex-wrap: wrap; }
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .stat-label { font-size: 12px; color: var(--text3); }
+
+  /* ROADMAP */
+  .roadmap { margin-bottom: 40px; }
+  .roadmap-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 700; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .roadmap-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .level-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; cursor: pointer;
+    transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .level-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .level-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,212,255,0.1); }
+  .level-card.l0::before { background: #3b82f6; }
+  .level-card.l1::before { background: var(--accent3); }
+  .level-card.l2::before { background: var(--green); }
+  .level-card.l3::before { background: var(--accent); }
+  .level-card.l4::before { background: var(--accent2); }
+  .level-card.l5::before { background: var(--red); }
+  .level-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text3); margin-bottom: 6px;
+  }
+  .level-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px; font-weight: 700; margin-bottom: 8px;
+  }
+  .level-desc { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
+  .level-topics { display: flex; flex-wrap: wrap; gap: 6px; }
+  .topic-tag {
+    background: var(--bg3); border: 1px solid var(--border);
+    font-size: 11px; padding: 2px 8px; border-radius: 6px;
+    color: var(--text3); font-family: 'JetBrains Mono', monospace;
+  }
+  .level-time {
+    margin-top: 12px; font-size: 11px; color: var(--text3);
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  /* CONTENT SECTION */
+  .content-header {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 32px;
+    padding-bottom: 24px; border-bottom: 1px solid var(--border);
+  }
+  .content-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .content-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; }
+  .content-subtitle { color: var(--text2); font-size: 14px; }
+
+  /* LESSON CARD */
+  .lesson-block { margin-bottom: 32px; }
+  .lesson-block h2 {
+    font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700;
+    margin-bottom: 12px; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .lesson-block h2::before {
+    content: ''; display: inline-block;
+    width: 4px; height: 20px; border-radius: 2px;
+    background: linear-gradient(var(--accent), var(--accent2));
+  }
+  .lesson-block h3 {
+    font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700;
+    margin: 20px 0 10px; color: var(--accent);
+  }
+  .lesson-block p { color: var(--text2); margin-bottom: 12px; line-height: 1.8; }
+
+  /* CODE BLOCK */
+  .code-wrap {
+    background: #080d18; border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; margin: 16px 0;
+  }
+  .code-header {
+    background: var(--bg3); padding: 8px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .code-lang {
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; font-family: 'JetBrains Mono', monospace;
+  }
+  .code-lang.c { color: #60a5fa; }
+  .code-lang.asm { color: #f59e0b; }
+  .code-lang.bash { color: #10b981; }
+  .code-lang.rust { color: #fb923c; }
+  .copy-btn {
+    background: var(--border); border: none; color: var(--text3);
+    font-size: 11px; padding: 3px 10px; border-radius: 4px;
+    cursor: pointer; font-family: 'JetBrains Mono', monospace;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { background: var(--accent); color: var(--bg); }
+  pre {
+    padding: 20px; overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; line-height: 1.6; color: #cdd6f4;
+  }
+  .kw { color: #cba6f7; }
+  .fn { color: #89b4fa; }
+  .str { color: #a6e3a1; }
+  .num { color: #fab387; }
+  .cmt { color: #6c7086; font-style: italic; }
+  .type { color: #f38ba8; }
+  .macro { color: #f9e2af; }
+
+  /* INFO BOXES */
+  .info-box {
+    border-radius: 10px; padding: 16px 20px; margin: 16px 0;
+    border-left: 4px solid; display: flex; gap: 12px;
+  }
+  .info-box.tip { background: rgba(0,212,255,0.05); border-color: var(--accent); }
+  .info-box.warning { background: rgba(245,158,11,0.05); border-color: var(--accent3); }
+  .info-box.danger { background: rgba(239,68,68,0.05); border-color: var(--red); }
+  .info-box.success { background: rgba(16,185,129,0.05); border-color: var(--green); }
+  .info-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .info-content { font-size: 14px; color: var(--text2); }
+  .info-content strong { color: var(--text); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; margin: 16px 0; border-radius: 10px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    background: var(--bg3); padding: 10px 16px;
+    text-align: left; font-size: 12px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text3); font-family: 'JetBrains Mono', monospace;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 10px 16px; border-bottom: 1px solid rgba(30,45,69,0.5); font-size: 13.5px; color: var(--text2); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(0,212,255,0.02); }
+  td strong { color: var(--text); }
+  td .green { color: var(--green); }
+  td .red { color: var(--red); }
+  td .yellow { color: var(--accent3); }
+  td .blue { color: var(--accent); }
+
+  /* QUIZ */
+  .quiz-block {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px; margin-top: 32px;
+  }
+  .quiz-title {
+    font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700;
+    margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .quiz-q { font-size: 15px; margin-bottom: 16px; color: var(--text); }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt {
+    background: var(--bg3); border: 1px solid var(--border);
+    padding: 10px 16px; border-radius: 8px; cursor: pointer;
+    font-size: 14px; color: var(--text2); transition: all 0.15s;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .quiz-opt:hover { border-color: var(--accent); color: var(--text); }
+  .quiz-opt.correct { border-color: var(--green); background: rgba(16,185,129,0.08); color: var(--green); }
+  .quiz-opt.wrong { border-color: var(--red); background: rgba(239,68,68,0.08); color: var(--red); }
+  .quiz-feedback { margin-top: 12px; font-size: 14px; display: none; padding: 12px 16px; border-radius: 8px; }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.ok { background: rgba(16,185,129,0.08); color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
+  .quiz-feedback.no { background: rgba(239,68,68,0.08); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+
+  /* NAV BUTTONS */
+  .nav-btns { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .btn {
+    padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none; transition: all 0.2s; font-family: 'Syne', sans-serif;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-primary { background: var(--accent); color: var(--bg); }
+  .btn-primary:hover { background: #00b8d9; transform: translateY(-1px); }
+  .btn-secondary { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none !important; }
+
+  /* HAMBURGER */
+  .hamburger {
+    display: none; background: none; border: none;
+    color: var(--text); font-size: 20px; cursor: pointer; padding: 4px;
+  }
+  .sidebar-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 40; backdrop-filter: blur(2px);
+  }
+
+  @media (max-width: 768px) {
+    .main { margin-left: 0; padding: 24px 20px; max-width: 100%; }
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .hamburger { display: block; }
+    .sidebar-overlay.open { display: block; }
+    .hero { padding: 28px 24px; }
+    .hero h1 { font-size: 26px; }
+    .roadmap-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <button class="hamburger" onclick="toggleSidebar()">☰</button>
+  <div class="logo">OSDevLearn<span>.</span></div>
+  <span class="nav-badge">Beta</span>
+  <div class="nav-right">
+    <span class="progress-text" id="progressText">0 / 6 selesai</span>
+    <div class="progress-bar-mini"><div class="progress-bar-mini-fill" id="progressFill"></div></div>
+  </div>
+</nav>
+
+<div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-header">Mulai</div>
+    <a class="sidebar-item active" onclick="showPage('home')" id="nav-home">
+      <span class="s-icon">🏠</span> Beranda
+    </a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-header">Kurikulum</div>
+    <a class="sidebar-item" onclick="showPage('l0')" id="nav-l0">
+      <span class="s-icon">🔵</span> Level 0 — Fondasi
+      <span class="s-badge new">Start</span>
+    </a>
+    <a class="sidebar-item" onclick="showPage('l1')" id="nav-l1">
+      <span class="s-icon">🟡</span> Level 1 — Linux & Terminal
+    </a>
+    <a class="sidebar-item" onclick="showPage('l2')" id="nav-l2">
+      <span class="s-icon">🟠</span> Level 2 — Bahasa C
+    </a>
+    <a class="sidebar-item" onclick="showPage('l3')" id="nav-l3">
+      <span class="s-icon">🔴</span> Level 3 — Computer Architecture
+    </a>
+    <a class="sidebar-item" onclick="showPage('l4')" id="nav-l4">
+      <span class="s-icon">⚫</span> Level 4 — Assembly ARM
+    </a>
+    <a class="sidebar-item" onclick="showPage('l5')" id="nav-l5">
+      <span class="s-icon">🟣</span> Level 5 — OS Concepts
+    </a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-header">Referensi</div>
+    <a class="sidebar-item" onclick="showPage('roadmap')">
+      <span class="s-icon">🗺️</span> Roadmap Lengkap
+    </a>
+    <a class="sidebar-item" onclick="showPage('resources')">
+      <span class="s-icon">📚</span> Resource & Tools
+    </a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HOME PAGE -->
+  <div class="page active" id="page-home">
+    <div class="hero">
+      <div class="hero-tag">🚀 Panduan Lengkap OS Development</div>
+      <h1>Belajar Bikin <span>Operating System</span> Sendiri</h1>
+      <p>Dari nol sampai bisa bikin OS untuk SBC seperti Raspberry Pi, OrangePi, dan RockPi. Cocok buat lo yang baru mulai!</p>
+      <div class="hero-stats">
+        <div class="stat"><div class="stat-num">6</div><div class="stat-label">Level</div></div>
+        <div class="stat"><div class="stat-num">~1.5</div><div class="stat-label">Tahun Roadmap</div></div>
+        <div class="stat"><div class="stat-num">2</div><div class="stat-label">Bahasa Inti</div></div>
+        <div class="stat"><div class="stat-num">∞</div><div class="stat-label">Potensi</div></div>
+      </div>
+    </div>
+
+    <div class="roadmap">
+      <div class="roadmap-title">🗺️ Peta Belajar</div>
+      <div class="roadmap-grid">
+        <div class="level-card l0" onclick="showPage('l0')">
+          <div class="level-num">LEVEL 0 • 2-4 MINGGU</div>
+          <div class="level-title">🔵 Fondasi Komputer</div>
+          <div class="level-desc">Cara kerja komputer, biner, hexadecimal, logika Boolean</div>
+          <div class="level-topics">
+            <span class="topic-tag">CPU & RAM</span>
+            <span class="topic-tag">Binary</span>
+            <span class="topic-tag">Hex</span>
+            <span class="topic-tag">Boolean</span>
+          </div>
+          <div class="level-time">⏱ 2-4 minggu</div>
+        </div>
+        <div class="level-card l1" onclick="showPage('l1')">
+          <div class="level-num">LEVEL 1 • 3-4 MINGGU</div>
+          <div class="level-title">🟡 Linux & Terminal</div>
+          <div class="level-desc">Command line, file system, bash scripting, proses Linux</div>
+          <div class="level-topics">
+            <span class="topic-tag">CLI</span>
+            <span class="topic-tag">Filesystem</span>
+            <span class="topic-tag">Bash</span>
+            <span class="topic-tag">Processes</span>
+          </div>
+          <div class="level-time">⏱ 3-4 minggu</div>
+        </div>
+        <div class="level-card l2" onclick="showPage('l2')">
+          <div class="level-num">LEVEL 2 • 2-3 BULAN</div>
+          <div class="level-title">🟠 Bahasa C</div>
+          <div class="level-desc">Pointer, memory management, struct, compile & linking</div>
+          <div class="level-topics">
+            <span class="topic-tag">Pointers</span>
+            <span class="topic-tag">Memory</span>
+            <span class="topic-tag">Structs</span>
+            <span class="topic-tag">GCC</span>
+          </div>
+          <div class="level-time">⏱ 2-3 bulan</div>
+        </div>
+        <div class="level-card l3" onclick="showPage('l3')">
+          <div class="level-num">LEVEL 3 • 1-2 BULAN</div>
+          <div class="level-title">🔴 Computer Architecture</div>
+          <div class="level-desc">CPU registers, ARM architecture, memory mapping, interrupt</div>
+          <div class="level-topics">
+            <span class="topic-tag">ARM</span>
+            <span class="topic-tag">Registers</span>
+            <span class="topic-tag">IRQ</span>
+            <span class="topic-tag">MMU</span>
+          </div>
+          <div class="level-time">⏱ 1-2 bulan</div>
+        </div>
+        <div class="level-card l4" onclick="showPage('l4')">
+          <div class="level-num">LEVEL 4 • 1-2 BULAN</div>
+          <div class="level-title">⚫ Assembly ARM</div>
+          <div class="level-desc">ARM instruction set, register ARM, baremetal programming</div>
+          <div class="level-topics">
+            <span class="topic-tag">Instructions</span>
+            <span class="topic-tag">Baremetal</span>
+            <span class="topic-tag">Bootloader</span>
+          </div>
+          <div class="level-time">⏱ 1-2 bulan</div>
+        </div>
+        <div class="level-card l5" onclick="showPage('l5')">
+          <div class="level-num">LEVEL 5 • 3-6 BULAN</div>
+          <div class="level-title">🟣 OS Concepts</div>
+          <div class="level-desc">Bootloader, MMU, process scheduling, file system, drivers</div>
+          <div class="level-topics">
+            <span class="topic-tag">Kernel</span>
+            <span class="topic-tag">Scheduling</span>
+            <span class="topic-tag">Drivers</span>
+            <span class="topic-tag">FS</span>
+          </div>
+          <div class="level-time">⏱ 3-6 bulan</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box tip">
+      <span class="info-icon">💡</span>
+      <div class="info-content"><strong>Tips:</strong> Jangan skip level! Setiap level adalah fondasi untuk level berikutnya. Linus Torvalds bikin Linux kernel pertama sendirian di umur 21 tahun dengan C + Assembly. Lo bisa juga! 🔥</div>
+    </div>
+  </div>
+
+  <!-- LEVEL 0 -->
+  <div class="page" id="page-l0">
+    <div class="content-header">
+      <div class="content-icon" style="background:rgba(59,130,246,0.15)">🔵</div>
+      <div>
+        <div class="content-title">Level 0 — Fondasi Komputer</div>
+        <div class="content-subtitle">Sebelum nulis kode, lo harus ngerti cara kerja mesin</div>
+      </div>
+    </div>
+
+    <div class="lesson-block">
+      <h2>Cara Kerja Komputer</h2>
+      <p>Komputer itu intinya cuma 3 komponen utama yang kerja bareng:</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Komponen</th><th>Fungsi</th><th>Analogi</th></tr>
+          <tr><td><strong>CPU</strong></td><td>Otak — ngeksekusi instruksi</td><td>Koki yang masak</td></tr>
+          <tr><td><strong>RAM</strong></td><td>Memori sementara — nyimpan data yang lagi dipake</td><td>Meja kerja si koki</td></tr>
+          <tr><td><strong>Storage</strong></td><td>Memori permanen — nyimpan data jangka panjang</td><td>Kulkas/gudang bahan</td></tr>
+        </table>
+      </div>
+
+      <h3>Alur Kerja Komputer</h3>
+      <p>Setiap program yang lo jalanin ngikutin siklus ini terus-menerus:</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang bash">Diagram</span></div>
+        <pre>
+  Storage (HDD/SSD)
+       ↓  load program
+      RAM  ←→  CPU
+              ↑
+         Fetch → Decode → Execute → (ulangi)
+        </pre>
+      </div>
+
+      <h3>Apa itu OS?</h3>
+      <p>OS adalah <strong>jembatan</strong> antara hardware dan software. Tanpa OS, program gak bisa ngomong ke hardware secara langsung dengan aman.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang bash">Lapisan Sistem</span></div>
+        <pre>
+  ┌─────────────────────┐
+  │   Aplikasi (Chrome) │  ← lo pakai ini sehari-hari
+  ├─────────────────────┤
+  │   OS (Linux/Win)    │  ← yang mau kita bikin!
+  ├─────────────────────┤
+  │   Hardware (CPU)    │  ← fisik
+  └─────────────────────┘
+        </pre>
+      </div>
+    </div>
+
+    <div class="lesson-block">
+      <h2>Sistem Bilangan Biner</h2>
+      <p>CPU hanya mengerti <strong>0 dan 1</strong> (listrik mati/nyala). Semua data — teks, gambar, video — pada akhirnya adalah deretan 0 dan 1.</p>
+
+      <h3>Konversi Desimal → Biner</h3>
+      <p>Contoh: angka <strong>13</strong> dalam biner:</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang bash">Biner</span></div>
+        <pre>
+  13 ÷ 2 = 6  sisa 1  ← LSB (bit paling kanan)
+   6 ÷ 2 = 3  sisa 0
+   3 ÷ 2 = 1  sisa 1
+   1 ÷ 2 = 0  sisa 1  ← MSB (bit paling kiri)
+
+  Baca dari bawah ke atas: 1101
+  Jadi 13 (desimal) = 1101 (biner)
+
+  Verifikasi: 8+4+0+1 = 13 ✓
+        </pre>
+      </div>
+
+      <h3>Hexadecimal (Hex)</h3>
+      <p>Hex pakai 16 simbol (0-9, A-F). Dipakai programmer OS karena lebih ringkas dari biner.</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Desimal</th><th>Biner</th><th>Hex</th></tr>
+          <tr><td>0</td><td>0000</td><td>0x0</td></tr>
+          <tr><td>10</td><td>1010</td><td>0xA</td></tr>
+          <tr><td>15</td><td>1111</td><td>0xF</td></tr>
+          <tr><td>255</td><td>11111111</td><td><strong>0xFF</strong></td></tr>
+        </table>
+      </div>
+      <div class="info-box tip">
+        <span class="info-icon">💡</span>
+        <div class="info-content"><strong>Kenapa hex penting di OS?</strong> Alamat memori selalu ditulis dalam hex. Contoh: <code>0xFFFF0000</code> adalah alamat di mana CPU mulai boot. Lo akan sering lihat ini!</div>
+      </div>
+    </div>
+
+    <div class="lesson-block">
+      <h2>Logika Boolean</h2>
+      <p>Tiga operasi dasar yang jadi fondasi semua logika di komputer:</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Operasi</th><th>Simbol</th><th>Arti</th><th>Contoh</th></tr>
+          <tr><td><strong>AND</strong></td><td>&amp;&amp;</td><td>Dua-duanya harus benar</td><td>1 AND 1 = 1</td></tr>
+          <tr><td><strong>OR</strong></td><td>||</td><td>Salah satu boleh benar</td><td>0 OR 1 = 1</td></tr>
+          <tr><td><strong>NOT</strong></td><td>!</td><td>Kebalikan</td><td>NOT 1 = 0</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="quiz-block">
+      <div class="quiz-title">🎯 Cek Pemahaman</div>
+      <div class="quiz-q">Angka 10 dalam desimal, berapa dalam biner?</div>
+      <div class="quiz-opts">
+        <div class="quiz-opt" onclick="answer(this, false)">🔴 1001</div>
+        <div class="quiz-opt" onclick="answer(this, true)">🟢 1010</div>
+        <div class="quiz-opt" onclick="answer(this, false)">🔴 1100</div>
+        <div class="quiz-opt" onclick="answer(this, false)">🔴 0110</div>
+      </div>
+      <div class="quiz-feedback" id="qfeedback">
+        ✅ Benar! 10 = 8+2 = 1010 dalam biner. 8=1000, 2=0010, jumlahnya 1010!
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="showPage('home')">← Beranda</button>
+      <button class="btn btn-primary" onclick="completePage('l0'); showPage('l1')">Lanjut ke Level 1 →</button>
+    </div>
+  </div>
+
+  <!-- LEVEL 1 -->
+  <div class="page" id="page-l1">
+    <div class="content-header">
+      <div class="content-icon" style="background:rgba(245,158,11,0.15)">🟡</div>
+      <div>
+        <div class="content-title">Level 1 — Linux & Terminal</div>
+        <div class="content-subtitle">OS yang akan lo bikin nanti berjalan di atas Linux tools</div>
+      </div>
+    </div>
+
+    <div class="lesson-block">
+      <h2>Kenapa Linux?</h2>
+      <p>Semua SBC (Raspberry Pi, OrangePi, dll) pakai Linux sebagai OS default. Tools untuk build OS (compiler, linker, debugger) semua ada di Linux. Makanya lo wajib familiar sama Linux.</p>
+      <div class="info-box success">
+        <span class="info-icon">✅</span>
+        <div class="info-content"><strong>Good news:</strong> Lo gak perlu install Linux di laptop/PC! Bisa pakai <strong>WSL2</strong> di Windows, atau <strong>Virtual Machine</strong>, atau langsung di SBC lo nanti.</div>
+      </div>
+
+      <h3>Perintah Terminal Wajib</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang bash">BASH</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cmt"># Navigasi</span>
+<span class="fn">pwd</span>           <span class="cmt"># lihat posisi sekarang</span>
+<span class="fn">ls</span> -la         <span class="cmt"># lihat semua file</span>
+<span class="fn">cd</span> /home/user  <span class="cmt"># pindah folder</span>
+<span class="fn">cd</span> ..          <span class="cmt"># naik satu level</span>
+
+<span class="cmt"># File operations</span>
+<span class="fn">mkdir</span> osproject    <span class="cmt"># buat folder</span>
+<span class="fn">touch</span> main.c       <span class="cmt"># buat file kosong</span>
+<span class="fn">cp</span> file1 file2     <span class="cmt"># copy file</span>
+<span class="fn">mv</span> file1 folder/   <span class="cmt"># pindah/rename</span>
+<span class="fn">rm</span> file.txt        <span class="cmt"># hapus file</span>
+
+<span class="cmt"># Lihat isi file</span>
+<span class="fn">cat</span> main.c         <span class="cmt"># tampilkan isi file</span>
+<span class="fn">nano</span> main.c        <span class="cmt"># edit file (simple)</span>
+
+<span class="cmt"># Info sistem</span>
+<span class="fn">uname</span> -a           <span class="cmt"># info kernel Linux</span>
+<span class="fn">lscpu</span>              <span class="cmt"># info CPU</span>
+<span class="fn">free</span> -h            <span class="cmt"># info RAM</span></pre>
+      </div>
+
+      <h3>Struktur Folder Linux</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang bash">Filesystem</span></div>
+        <pre>
+  /                 ← root (puncak semua folder)
+  ├── bin/          ← program dasar (ls, cat, dll)
+  ├── boot/         ← bootloader & kernel ← PENTING buat OS dev!
+  ├── dev/          ← device files (hardware)
+  ├── etc/          ← konfigurasi sistem
+  ├── home/         ← folder user (lo kerja di sini)
+  ├── lib/          ← library sistem
+  ├── proc/         ← info proses yang lagi jalan
+  └── sys/          ← interface ke kernel
+        </pre>
+      </div>
+    </div>
+
+    <div class="lesson-block">
+      <h2>Bash Scripting Dasar</h2>
+      <p>Bash script itu file teks berisi perintah Linux yang bisa dijalankan otomatis. Nanti lo bakal pakai ini buat build system OS lo.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang bash">BASH</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cmt">#!/bin/bash</span>
+<span class="cmt"># Baris pertama wajib ada (shebang)</span>
+
+<span class="cmt"># Variable</span>
+<span class="macro">NAMA</span>=<span class="str">"OSku"</span>
+<span class="macro">VERSI</span>=<span class="str">"0.1"</span>
+
+<span class="cmt"># Output</span>
+<span class="fn">echo</span> <span class="str">"Building $NAMA v$VERSI..."</span>
+
+<span class="cmt"># Kondisi</span>
+<span class="kw">if</span> [ -f <span class="str">"kernel.c"</span> ]; <span class="kw">then</span>
+    <span class="fn">echo</span> <span class="str">"File kernel.c ditemukan!"</span>
+<span class="kw">else</span>
+    <span class="fn">echo</span> <span class="str">"File tidak ada!"</span>
+<span class="kw">fi</span>
+
+<span class="cmt"># Loop</span>
+<span class="kw">for</span> file <span class="kw">in</span> *.c; <span class="kw">do</span>
+    <span class="fn">echo</span> <span class="str">"Compiling: $file"</span>
+    gcc -c <span class="str">"$file"</span>
+<span class="kw">done</span>
+
+<span class="fn">echo</span> <span class="str">"Build selesai!"</span></pre>
+      </div>
+    </div>
+
+    <div class="lesson-block">
+      <h2>Proses di Linux</h2>
+      <p>Setiap program yang jalan di Linux itu disebut <strong>proses</strong>. OS lo nanti harus bisa manage proses-proses ini.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang bash">BASH</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="fn">ps</span> aux         <span class="cmt"># lihat semua proses</span>
+<span class="fn">top</span>            <span class="cmt"># monitor proses real-time</span>
+<span class="fn">kill</span> 1234      <span class="cmt"># hentikan proses dengan PID 1234</span>
+<span class="fn">jobs</span>           <span class="cmt"># lihat proses background</span></pre>
+      </div>
+      <div class="info-box warning">
+        <span class="info-icon">⚠️</span>
+        <div class="info-content"><strong>Catat ini!</strong> Setiap proses punya PID (Process ID) unik. OS lo nanti harus assign PID ke setiap proses yang dijalankan — ini namanya <strong>process management</strong>.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="showPage('l0')">← Level 0</button>
+      <button class="btn btn-primary" onclick="completePage('l1'); showPage('l2')">Lanjut ke Level 2 →</button>
+    </div>
+  </div>
+
+  <!-- LEVEL 2 -->
+  <div class="page" id="page-l2">
+    <div class="content-header">
+      <div class="content-icon" style="background:rgba(16,185,129,0.15)">🟠</div>
+      <div>
+        <div class="content-title">Level 2 — Bahasa C</div>
+        <div class="content-subtitle">Bahasa yang dipakai 99% kernel di dunia — wajib dikuasai</div>
+      </div>
+    </div>
+
+    <div class="lesson-block">
+      <h2>Program C Pertama</h2>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang c">C</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="macro">#include</span> <span class="str">&lt;stdio.h&gt;</span>   <span class="cmt">// library standar</span>
+
+<span class="type">int</span> <span class="fn">main</span>() {
+    <span class="fn">printf</span>(<span class="str">"Hello, OS World!\n"</span>);
+    <span class="kw">return</span> <span class="num">0</span>;  <span class="cmt">// 0 = sukses</span>
+}
+
+<span class="cmt">// Cara compile & run:</span>
+<span class="cmt">// gcc hello.c -o hello</span>
+<span class="cmt">// ./hello</span></pre>
+      </div>
+
+      <h3>Tipe Data di C</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Tipe</th><th>Ukuran</th><th>Contoh</th><th>Kegunaan di OS</th></tr>
+          <tr><td><strong>char</strong></td><td>1 byte</td><td>'A', 65</td><td>Karakter, byte data</td></tr>
+          <tr><td><strong>int</strong></td><td>4 byte</td><td>42, -10</td><td>Counter, PID</td></tr>
+          <tr><td><strong>long</strong></td><td>8 byte</td><td>1000000L</td><td>Alamat memori</td></tr>
+          <tr><td><strong>uint32_t</strong></td><td>4 byte</td><td>0xFFFF</td><td>Register hardware</td></tr>
+          <tr><td><strong>uint64_t</strong></td><td>8 byte</td><td>0xFFFF0000</td><td>Alamat 64-bit</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="lesson-block">
+      <h2>Pointer — Konsep Terpenting</h2>
+      <p>Pointer adalah <strong>variabel yang menyimpan alamat memori</strong>. Ini konsep paling penting di C dan OS development karena OS harus langsung manipulasi memori.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang c">C</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="macro">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+
+<span class="type">int</span> <span class="fn">main</span>() {
+    <span class="type">int</span> nilai = <span class="num">42</span>;      <span class="cmt">// variabel biasa</span>
+    <span class="type">int</span> *ptr = &nilai;   <span class="cmt">// pointer ke 'nilai'</span>
+                         <span class="cmt">// & = ambil alamat memori</span>
+
+    <span class="fn">printf</span>(<span class="str">"Nilai: %d\n"</span>, nilai);    <span class="cmt">// 42</span>
+    <span class="fn">printf</span>(<span class="str">"Alamat: %p\n"</span>, ptr);    <span class="cmt">// misal: 0x7ffd1234</span>
+    <span class="fn">printf</span>(<span class="str">"Via pointer: %d\n"</span>, *ptr); <span class="cmt">// 42 juga</span>
+                         <span class="cmt">// * = baca nilai di alamat itu</span>
+
+    *ptr = <span class="num">100</span>;   <span class="cmt">// ubah nilai lewat pointer</span>
+    <span class="fn">printf</span>(<span class="str">"Sekarang: %d\n"</span>, nilai);  <span class="cmt">// 100!</span>
+
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+
+      <h3>Pointer di OS — Contoh Nyata</h3>
+      <p>Di OS development, lo pakai pointer buat langsung nulis ke alamat hardware:</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang c">C</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cmt">// Contoh: nulis ke UART (serial port) di SBC</span>
+<span class="cmt">// Alamat UART di Raspberry Pi = 0x3F201000</span>
+
+<span class="type">volatile uint32_t</span> *uart = (<span class="type">volatile uint32_t</span>*)<span class="num">0x3F201000</span>;
+
+<span class="cmt">// Kirim karakter 'A' lewat UART</span>
+*uart = <span class="str">'A'</span>;
+
+<span class="cmt">// Ini cara OS "ngobrol" langsung sama hardware!</span></pre>
+      </div>
+      <div class="info-box warning">
+        <span class="info-icon">⚠️</span>
+        <div class="info-content"><strong>volatile</strong> dipakai supaya compiler gak "optimize away" akses ke hardware register. Ini wajib di OS dev!</div>
+      </div>
+    </div>
+
+    <div class="lesson-block">
+      <h2>Memory Management</h2>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang c">C</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="macro">#include</span> <span class="str">&lt;stdlib.h&gt;</span>
+
+<span class="type">int</span> <span class="fn">main</span>() {
+    <span class="cmt">// malloc = minta memori dari heap</span>
+    <span class="type">int</span> *arr = (<span class="type">int</span>*) <span class="fn">malloc</span>(<span class="num">5</span> * <span class="kw">sizeof</span>(<span class="type">int</span>));
+
+    <span class="kw">if</span> (arr == <span class="num">NULL</span>) {
+        <span class="fn">printf</span>(<span class="str">"Memori habis!\n"</span>);
+        <span class="kw">return</span> <span class="num">1</span>;
+    }
+
+    <span class="cmt">// Isi array</span>
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i < <span class="num">5</span>; i++) {
+        arr[i] = i * <span class="num">10</span>;
+    }
+
+    <span class="cmt">// WAJIB free setelah selesai!</span>
+    <span class="fn">free</span>(arr);
+
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+      <div class="info-box danger">
+        <span class="info-icon">🚨</span>
+        <div class="info-content"><strong>Memory Leak!</strong> Kalau lo malloc tapi lupa free, memori "bocor" dan lama-lama habis. Di OS dev, ini sangat kritis — OS lo bisa crash!</div>
+      </div>
+
+      <h3>Struct — Bikin Tipe Data Sendiri</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang c">C</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cmt">// Contoh: struct buat proses (kayak di OS beneran!)</span>
+<span class="kw">typedef struct</span> {
+    <span class="type">int</span>   pid;           <span class="cmt">// Process ID</span>
+    <span class="type">char</span>  name[<span class="num">32</span>];     <span class="cmt">// Nama proses</span>
+    <span class="type">int</span>   state;         <span class="cmt">// 0=ready, 1=running, 2=blocked</span>
+    <span class="type">void</span> *stack_ptr;     <span class="cmt">// Pointer ke stack proses</span>
+} <span class="type">Process</span>;
+
+<span class="type">int</span> <span class="fn">main</span>() {
+    <span class="type">Process</span> p1;
+    p1.pid = <span class="num">1</span>;
+    p1.state = <span class="num">1</span>;  <span class="cmt">// running</span>
+
+    <span class="fn">printf</span>(<span class="str">"PID: %d\n"</span>, p1.pid);
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="showPage('l1')">← Level 1</button>
+      <button class="btn btn-primary" onclick="completePage('l2'); showPage('l3')">Lanjut ke Level 3 →</button>
+    </div>
+  </div>
+
+  <!-- LEVEL 3 -->
+  <div class="page" id="page-l3">
+    <div class="content-header">
+      <div class="content-icon" style="background:rgba(0,212,255,0.15)">🔴</div>
+      <div>
+        <div class="content-title">Level 3 — Computer Architecture</div>
+        <div class="content-subtitle">Memahami hardware yang akan lo kendalikan</div>
+      </div>
+    </div>
+
+    <div class="lesson-block">
+      <h2>ARM Architecture</h2>
+      <p>Semua SBC (Raspberry Pi, OrangePi, RockPi) pakai CPU <strong>ARM</strong>. ARM berbeda dari Intel/AMD (x86) yang ada di laptop/PC biasa.</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Fitur</th><th>ARM (SBC)</th><th>x86 (PC/Laptop)</th></tr>
+          <tr><td><strong>Daya</strong></td><td class="green">Hemat (1-5W)</td><td class="yellow">Boros (65-200W)</td></tr>
+          <tr><td><strong>Instruksi</strong></td><td>RISC (simpel)</td><td>CISC (kompleks)</td></tr>
+          <tr><td><strong>Harga chip</strong></td><td class="green">Murah</td><td class="red">Mahal</td></tr>
+          <tr><td><strong>Buat OS dev pemula</strong></td><td class="green">✅ Lebih mudah</td><td class="red">Lebih rumit</td></tr>
+        </table>
+      </div>
+
+      <h3>Register CPU</h3>
+      <p>Register itu memori super kecil yang ada di dalam CPU sendiri — paling cepat diakses. ARM 64-bit punya register:</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang asm">ARM64</span></div>
+        <pre>
+  x0 - x7    → Parameter fungsi & return value
+  x8 - x18   → General purpose (pakai bebas)
+  x19 - x28  → Callee-saved (harus dijaga)
+  x29        → Frame Pointer (FP)
+  x30        → Link Register (LR) — alamat balik fungsi
+  sp         → Stack Pointer — posisi stack sekarang
+  pc         → Program Counter — instruksi berikutnya
+        </pre>
+      </div>
+
+      <h3>Memory Map di SBC</h3>
+      <p>Di SBC, setiap hardware punya "alamat" di memori. OS lo nanti nulis ke alamat itu buat kontrol hardware:</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang bash">Raspberry Pi 4 Memory Map</span></div>
+        <pre>
+  0x00000000 - 0x3FFFFFFF  → RAM (1GB)
+  0xFC000000 - 0xFCFFFFFF  → Peripheral (hardware)
+    ↳ 0xFC201000           → UART0 (serial)
+    ↳ 0xFC200000           → GPIO
+    ↳ 0xFC00B000           → Interrupt Controller
+  0xFF800000+              → VideoCore (GPU)
+        </pre>
+      </div>
+    </div>
+
+    <div class="lesson-block">
+      <h2>Interrupt — Cara Hardware "Manggil" OS</h2>
+      <p>Interrupt adalah sinyal dari hardware ke CPU: <em>"Hei, ada sesuatu yang butuh perhatian!"</em></p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang bash">Contoh Interrupt</span></div>
+        <pre>
+  Keyboard ditekan  →  Keyboard Controller kirim IRQ
+                    →  CPU stop program sekarang
+                    →  CPU jalankan "Interrupt Handler"
+                    →  Handler proses keystroke
+                    →  CPU lanjut program tadi
+
+  Tanpa interrupt: OS harus terus-terusan nanya ke
+  hardware "ada input gak? ada input gak?" — BOROS!
+        </pre>
+      </div>
+
+      <div class="info-box tip">
+        <span class="info-icon">💡</span>
+        <div class="info-content"><strong>Interrupt Handler</strong> adalah fungsi yang lo tulis di OS lo buat handle event dari hardware. Ini salah satu hal pertama yang lo implement waktu bikin OS!</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="showPage('l2')">← Level 2</button>
+      <button class="btn btn-primary" onclick="completePage('l3'); showPage('l4')">Lanjut ke Level 4 →</button>
+    </div>
+  </div>
+
+  <!-- LEVEL 4 -->
+  <div class="page" id="page-l4">
+    <div class="content-header">
+      <div class="content-icon" style="background:rgba(30,30,30,0.8)">⚫</div>
+      <div>
+        <div class="content-title">Level 4 — Assembly ARM</div>
+        <div class="content-subtitle">Ngobrol langsung sama CPU dalam bahasa aslinya</div>
+      </div>
+    </div>
+
+    <div class="lesson-block">
+      <h2>Apa itu Assembly?</h2>
+      <p>Assembly adalah bahasa pemrograman yang instruksinya <strong>1:1 dengan instruksi CPU</strong>. Setiap baris Assembly = 1 operasi CPU.</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Level</th><th>Contoh</th><th>Kecepatan</th></tr>
+          <tr><td>Python</td><td>x = 5 + 3</td><td class="red">Lambat</td></tr>
+          <tr><td>C</td><td>int x = 5 + 3;</td><td class="yellow">Cepat</td></tr>
+          <tr><td>Assembly</td><td>MOV x0, #5 / ADD x0, x0, #3</td><td class="green">Tercepat</td></tr>
+        </table>
+      </div>
+
+      <h3>Instruksi ARM Dasar</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang asm">ARM64 Assembly</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cmt">// MOV — pindahkan nilai ke register</span>
+<span class="fn">MOV</span>  x0, #<span class="num">42</span>       <span class="cmt">// x0 = 42</span>
+<span class="fn">MOV</span>  x1, x0        <span class="cmt">// x1 = x0</span>
+
+<span class="cmt">// Aritmatika</span>
+<span class="fn">ADD</span>  x0, x1, x2    <span class="cmt">// x0 = x1 + x2</span>
+<span class="fn">SUB</span>  x0, x1, #<span class="num">5</span>   <span class="cmt">// x0 = x1 - 5</span>
+<span class="fn">MUL</span>  x0, x1, x2    <span class="cmt">// x0 = x1 * x2</span>
+
+<span class="cmt">// Load & Store (akses memori)</span>
+<span class="fn">LDR</span>  x0, [x1]      <span class="cmt">// x0 = *x1 (baca dari memori)</span>
+<span class="fn">STR</span>  x0, [x1]      <span class="cmt">// *x1 = x0 (tulis ke memori)</span>
+
+<span class="cmt">// Branch (lompat)</span>
+<span class="fn">B</span>    label          <span class="cmt">// lompat ke label</span>
+<span class="fn">BL</span>   fungsi         <span class="cmt">// panggil fungsi (simpan return addr)</span>
+<span class="fn">RET</span>                 <span class="cmt">// kembali dari fungsi</span>
+
+<span class="cmt">// Kondisi</span>
+<span class="fn">CMP</span>  x0, #<span class="num">10</span>       <span class="cmt">// bandingkan x0 dengan 10</span>
+<span class="fn">BEQ</span>  label          <span class="cmt">// lompat jika sama</span>
+<span class="fn">BNE</span>  label          <span class="cmt">// lompat jika tidak sama</span></pre>
+      </div>
+
+      <h3>Contoh: Bootloader Sederhana</h3>
+      <p>Ini adalah kode pertama yang dijalankan saat SBC lo nyala:</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang asm">ARM64 — boot.S</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cmt">// File: boot.S</span>
+<span class="cmt">// Kode ini dijalankan PERTAMA KALI saat SBC nyala</span>
+
+<span class="macro">.section</span> <span class="str">".text.boot"</span>  <span class="cmt">// section khusus boot</span>
+<span class="macro">.global</span> _start           <span class="cmt">// entry point</span>
+
+_start:
+    <span class="cmt">// CPU mulai di core 0, matikan core lain</span>
+    <span class="fn">MRS</span>  x1, mpidr_el1     <span class="cmt">// baca CPU ID</span>
+    <span class="fn">AND</span>  x1, x1, #<span class="num">3</span>        <span class="cmt">// ambil bit 0-1</span>
+    <span class="fn">CBZ</span>  x1, init          <span class="cmt">// kalau core 0, lanjut</span>
+
+halt:
+    <span class="fn">WFE</span>                    <span class="cmt">// core lain: tidur</span>
+    <span class="fn">B</span>    halt
+
+init:
+    <span class="cmt">// Set Stack Pointer</span>
+    <span class="fn">LDR</span>  x1, =<span class="num">0x80000</span>     <span class="cmt">// alamat stack</span>
+    <span class="fn">MOV</span>  sp, x1
+
+    <span class="cmt">// Lompat ke kernel C!</span>
+    <span class="fn">BL</span>   kernel_main       <span class="cmt">// panggil fungsi C</span>
+
+    <span class="cmt">// Kalau kernel_main return (harusnya gak)</span>
+    <span class="fn">B</span>    halt</pre>
+      </div>
+
+      <div class="info-box success">
+        <span class="info-icon">🎉</span>
+        <div class="info-content"><strong>Keren kan?</strong> Setelah boot.S setup stack, dia panggil <code>kernel_main()</code> yang lo tulis dalam C. Itulah kenapa C + Assembly adalah combo sempurna — Assembly buat setup awal, C buat logika utama!</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="showPage('l3')">← Level 3</button>
+      <button class="btn btn-primary" onclick="completePage('l4'); showPage('l5')">Lanjut ke Level 5 →</button>
+    </div>
+  </div>
+
+  <!-- LEVEL 5 -->
+  <div class="page" id="page-l5">
+    <div class="content-header">
+      <div class="content-icon" style="background:rgba(124,58,237,0.15)">🟣</div>
+      <div>
+        <div class="content-title">Level 5 — OS Concepts</div>
+        <div class="content-subtitle">Semua konsep yang dibutuhkan untuk membangun OS nyata</div>
+      </div>
+    </div>
+
+    <div class="lesson-block">
+      <h2>Struktur OS</h2>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang bash">Arsitektur Mini OS</span></div>
+        <pre>
+  ┌──────────────────────────────┐
+  │         User Space           │
+  │   (aplikasi yang lo jalanin) │
+  ├──────────────────────────────┤
+  │       System Calls           │ ← jembatan user ↔ kernel
+  ├──────────────────────────────┤
+  │          KERNEL              │
+  │  ┌─────────┐ ┌────────────┐  │
+  │  │ Process │ │   Memory   │  │
+  │  │ Manager │ │  Manager   │  │
+  │  └─────────┘ └────────────┘  │
+  │  ┌─────────┐ ┌────────────┐  │
+  │  │   File  │ │  Drivers   │  │
+  │  │ System  │ │ (Hardware) │  │
+  │  └─────────┘ └────────────┘  │
+  └──────────────────────────────┘
+        </pre>
+      </div>
+
+      <h3>1. Process Management</h3>
+      <p>OS harus bisa jalankan banyak program "sekaligus" padahal CPU cuma satu. Tricknya: bergantian super cepat!</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang c">C — Contoh PCB (Process Control Block)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cmt">// PCB = struktur data yang nyimpen info tiap proses</span>
+<span class="kw">typedef struct</span> {
+    <span class="type">uint32_t</span> pid;          <span class="cmt">// Process ID unik</span>
+    <span class="type">uint32_t</span> state;        <span class="cmt">// READY/RUNNING/BLOCKED</span>
+    <span class="type">uint64_t</span> registers[31];<span class="cmt">// State CPU saat di-pause</span>
+    <span class="type">uint64_t</span> sp;           <span class="cmt">// Stack pointer</span>
+    <span class="type">uint64_t</span> pc;           <span class="cmt">// Program counter</span>
+    <span class="type">uint64_t</span> *page_table;  <span class="cmt">// Memori milik proses ini</span>
+} <span class="type">PCB</span>;
+
+<span class="cmt">// OS simpan semua proses dalam array/list</span>
+<span class="type">PCB</span> proses_table[<span class="num">256</span>];  <span class="cmt">// max 256 proses</span></pre>
+      </div>
+
+      <h3>2. Memory Management</h3>
+      <p>OS harus ngatur siapa boleh pakai memori mana. Ini pakai sistem <strong>paging</strong>:</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang bash">Konsep Paging</span></div>
+        <pre>
+  Memori fisik dibagi jadi "halaman" (page) 4KB:
+
+  Proses A pikir punya:  0x0000 - 0xFFFF (64KB)
+  Proses B pikir punya:  0x0000 - 0xFFFF (64KB)
+
+  OS translate via Page Table:
+  A's 0x0000 → fisik 0x10000
+  B's 0x0000 → fisik 0x30000
+
+  Jadi tiap proses "terisolasi" — A gak bisa
+  akses memori B. Inilah KEAMANAN OS!
+        </pre>
+      </div>
+
+      <h3>3. Simple Kernel Main</h3>
+      <p>Inilah "isi" kernel pertama lo — fungsi C yang dipanggil dari Assembly:</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang c">C — kernel.c</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cmt">// Alamat UART Raspberry Pi 3</span>
+<span class="macro">#define</span> UART0_BASE  <span class="num">0x3F201000</span>
+<span class="macro">#define</span> UART0_DR    (*((<span class="type">volatile uint32_t</span>*)(UART0_BASE + <span class="num">0x00</span>)))
+<span class="macro">#define</span> UART0_FR    (*((<span class="type">volatile uint32_t</span>*)(UART0_BASE + <span class="num">0x18</span>)))
+
+<span class="type">void</span> <span class="fn">uart_putc</span>(<span class="type">char</span> c) {
+    <span class="cmt">// Tunggu UART siap</span>
+    <span class="kw">while</span> (UART0_FR & (<span class="num">1</span> << <span class="num">5</span>));
+    UART0_DR = c;
+}
+
+<span class="type">void</span> <span class="fn">uart_puts</span>(<span class="type">const char</span> *str) {
+    <span class="kw">while</span> (*str) <span class="fn">uart_putc</span>(*str++);
+}
+
+<span class="cmt">// Fungsi ini dipanggil dari boot.S</span>
+<span class="type">void</span> <span class="fn">kernel_main</span>() {
+    <span class="fn">uart_puts</span>(<span class="str">"Halo dari OS buatan gw sendiri!\n"</span>);
+    <span class="fn">uart_puts</span>(<span class="str">"Kernel berhasil booting!\n"</span>);
+
+    <span class="cmt">// Loop selamanya (OS gak boleh berhenti)</span>
+    <span class="kw">while</span>(<span class="num">1</span>);
+}</pre>
+      </div>
+
+      <div class="info-box success">
+        <span class="info-icon">🎉</span>
+        <div class="info-content"><strong>Ini OS pertama lo!</strong> boot.S + kernel.c ini sudah cukup buat bikin OS minimal yang bisa print teks ke serial port di Raspberry Pi. Dari sini lo tinggal tambah fitur satu per satu!</div>
+      </div>
+    </div>
+
+    <div class="lesson-block">
+      <h2>Langkah Selanjutnya Setelah Level 5</h2>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Fitur</th><th>Deskripsi</th><th>Kesulitan</th></tr>
+          <tr><td><strong>UART Driver</strong></td><td>Input/output teks</td><td class="green">⭐⭐</td></tr>
+          <tr><td><strong>Interrupt Handler</strong></td><td>Handle event hardware</td><td class="yellow">⭐⭐⭐</td></tr>
+          <tr><td><strong>Memory Allocator</strong></td><td>malloc() versi sendiri</td><td class="yellow">⭐⭐⭐</td></tr>
+          <tr><td><strong>Process Scheduler</strong></td><td>Multitasking</td><td class="red">⭐⭐⭐⭐</td></tr>
+          <tr><td><strong>File System</strong></td><td>Baca/tulis file</td><td class="red">⭐⭐⭐⭐</td></tr>
+          <tr><td><strong>Shell</strong></td><td>Command line interface</td><td class="red">⭐⭐⭐⭐</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="showPage('l4')">← Level 4</button>
+      <button class="btn btn-primary" onclick="completePage('l5'); showPage('resources')">Lihat Resources →</button>
+    </div>
+  </div>
+
+  <!-- ROADMAP PAGE -->
+  <div class="page" id="page-roadmap">
+    <div class="content-header">
+      <div class="content-icon" style="background:rgba(0,212,255,0.1)">🗺️</div>
+      <div>
+        <div class="content-title">Roadmap Lengkap</div>
+        <div class="content-subtitle">Timeline realistis dari nol sampai punya OS sendiri</div>
+      </div>
+    </div>
+    <div class="lesson-block">
+      <div class="table-wrap">
+        <table>
+          <tr><th>Level</th><th>Topik</th><th>Waktu</th><th>Output</th></tr>
+          <tr><td><span class="blue">0</span></td><td><strong>Fondasi Komputer</strong></td><td>2-4 minggu</td><td>Paham biner, hex, logika</td></tr>
+          <tr><td><span class="yellow">1</span></td><td><strong>Linux & Terminal</strong></td><td>3-4 minggu</td><td>Bisa pakai CLI & bash script</td></tr>
+          <tr><td><span class="green">2</span></td><td><strong>Bahasa C</strong></td><td>2-3 bulan</td><td>Bisa nulis program C dengan pointer</td></tr>
+          <tr><td><span class="blue">3</span></td><td><strong>Computer Architecture</strong></td><td>1-2 bulan</td><td>Paham ARM, register, interrupt</td></tr>
+          <tr><td>4</td><td><strong>Assembly ARM</strong></td><td>1-2 bulan</td><td>Bisa nulis bootloader</td></tr>
+          <tr><td><span class="red">5</span></td><td><strong>OS Concepts</strong></td><td>3-6 bulan</td><td>Mini OS jalan di SBC!</td></tr>
+        </table>
+      </div>
+      <div class="info-box tip">
+        <span class="info-icon">🔥</span>
+        <div class="info-content"><strong>Lo umur 14 tahun.</strong> Kalau mulai sekarang dan konsisten, umur 15-16 tahun lo udah bisa bikin OS sendiri di SBC. Itu achievement yang sangat langka dan keren banget di dunia tech!</div>
+      </div>
+      <h3>Combo Bahasa yang Dipakai</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang bash">Stack</span></div>
+        <pre>
+  boot.S        → ARM Assembly  (bootloader)
+  kernel.c      → C             (inti OS)
+  drivers/*.c   → C             (hardware drivers)
+  Makefile      → Make + Bash   (build system)
+  tools/*.py    → Python        (utilities, opsional)
+        </pre>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="showPage('home')">← Beranda</button>
+      <button class="btn btn-primary" onclick="showPage('resources')">Resources →</button>
+    </div>
+  </div>
+
+  <!-- RESOURCES PAGE -->
+  <div class="page" id="page-resources">
+    <div class="content-header">
+      <div class="content-icon" style="background:rgba(245,158,11,0.15)">📚</div>
+      <div>
+        <div class="content-title">Resource & Tools</div>
+        <div class="content-subtitle">Semua yang lo butuhkan — semuanya gratis!</div>
+      </div>
+    </div>
+    <div class="lesson-block">
+      <h2>Buku & Tutorial Gratis</h2>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Resource</th><th>Untuk</th><th>Link</th></tr>
+          <tr><td><strong>CS50 Harvard</strong></td><td>C & Fondasi</td><td class="blue">cs50.harvard.edu</td></tr>
+          <tr><td><strong>The Linux Command Line</strong></td><td>Linux & Terminal</td><td class="blue">linuxcommand.org</td></tr>
+          <tr><td><strong>Learn C The Hard Way</strong></td><td>Bahasa C</td><td class="blue">learncodethehardway.org</td></tr>
+          <tr><td><strong>OSDev Wiki</strong></td><td>OS Development</td><td class="blue">wiki.osdev.org</td></tr>
+          <tr><td><strong>OS: Three Easy Pieces</strong></td><td>OS Concepts</td><td class="blue">ostep.org</td></tr>
+          <tr><td><strong>ARM Architecture Reference</strong></td><td>ARM Assembly</td><td class="blue">developer.arm.com</td></tr>
+          <tr><td><strong>xv6 (MIT)</strong></td><td>Contoh OS nyata</td><td class="blue">github.com/mit-pdos/xv6</td></tr>
+        </table>
+      </div>
+
+      <h2>Tools yang Dibutuhkan</h2>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang bash">BASH — Install di Ubuntu/Debian</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cmt"># Cross-compiler untuk ARM (compile di PC, run di SBC)</span>
+sudo apt install gcc-aarch64-linux-gnu
+
+<span class="cmt"># Assembler & linker</span>
+sudo apt install binutils-aarch64-linux-gnu
+
+<span class="cmt"># QEMU — emulator SBC (gak perlu hardware asli dulu!)</span>
+sudo apt install qemu-system-aarch64
+
+<span class="cmt"># Build tools</span>
+sudo apt install make git
+
+<span class="cmt"># Text editor (pilih salah satu)</span>
+sudo apt install vim          <span class="cmt"># klasik</span>
+sudo snap install code        <span class="cmt"># VS Code</span></pre>
+      </div>
+
+      <h2>SBC yang Direkomendasikan</h2>
+      <div class="table-wrap">
+        <table>
+          <tr><th>SBC</th><th>Harga Est.</th><th>Dokumentasi</th><th>Cocok Untuk</th></tr>
+          <tr><td><strong>Raspberry Pi 4</strong></td><td>~600rb</td><td class="green">⭐⭐⭐⭐⭐</td><td>Semua level, terbaik</td></tr>
+          <tr><td><strong>Raspberry Pi 3B+</strong></td><td>~400rb</td><td class="green">⭐⭐⭐⭐⭐</td><td>Budget lebih kecil</td></tr>
+          <tr><td><strong>OrangePi 3</strong></td><td>~250rb</td><td class="yellow">⭐⭐⭐</td><td>Budget terbatas</td></tr>
+          <tr><td><strong>QEMU (Emulator)</strong></td><td>GRATIS</td><td class="green">⭐⭐⭐⭐</td><td>Mulai tanpa hardware!</td></tr>
+        </table>
+      </div>
+
+      <div class="info-box tip">
+        <span class="info-icon">💡</span>
+        <div class="info-content"><strong>Pro tip:</strong> Mulai dengan <strong>QEMU dulu</strong> sebelum beli hardware! QEMU bisa emulasi Raspberry Pi di laptop lo. Gratis dan gak ada risiko brick.</div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="showPage('roadmap')">← Roadmap</button>
+      <button class="btn btn-primary" onclick="showPage('l0')">Mulai Belajar →</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  const pages = ['home','l0','l1','l2','l3','l4','l5','roadmap','resources'];
+  const completed = new Set();
+
+  function showPage(id) {
+    pages.forEach(p => {
+      document.getElementById('page-'+p)?.classList.remove('active');
+      const nav = document.getElementById('nav-'+p);
+      if (nav) nav.classList.remove('active');
+    });
+    const page = document.getElementById('page-'+id);
+    if (page) page.classList.add('active');
+    const nav = document.getElementById('nav-'+id);
+    if (nav) nav.classList.add('active');
+    window.scrollTo(0, 0);
+    if (window.innerWidth <= 768) closeSidebar();
+  }
+
+  function completePage(id) {
+    completed.add(id);
+    const nav = document.getElementById('nav-'+id);
+    if (nav) {
+      nav.classList.add('done');
+      const badge = nav.querySelector('.s-badge');
+      if (badge) { badge.textContent = '✓'; badge.className = 's-badge done'; }
+      else {
+        const b = document.createElement('span');
+        b.className = 's-badge done'; b.textContent = '✓';
+        nav.appendChild(b);
+      }
+    }
+    const levels = ['l0','l1','l2','l3','l4','l5'];
+    const done = levels.filter(l => completed.has(l)).length;
+    document.getElementById('progressText').textContent = `${done} / 6 selesai`;
+    document.getElementById('progressFill').style.width = `${(done/6)*100}%`;
+  }
+
+  function answer(el, correct) {
+    const opts = el.parentElement.querySelectorAll('.quiz-opt');
+    opts.forEach(o => o.style.pointerEvents = 'none');
+    const fb = document.getElementById('qfeedback');
+    if (correct) {
+      el.classList.add('correct');
+      fb.className = 'quiz-feedback show ok';
+      fb.textContent = '✅ Benar! 10 = 8+2 = 1010 dalam biner.';
+    } else {
+      el.classList.add('wrong');
+      fb.className = 'quiz-feedback show no';
+      fb.textContent = '❌ Kurang tepat. Jawaban yang benar: 1010 (8+0+2+0=10)';
+      opts.forEach(o => { if (o.textContent.includes('1010')) o.classList.add('correct'); });
+    }
+  }
+
+  function copyCode(btn) {
+    const pre = btn.closest('.code-wrap').querySelector('pre');
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      btn.textContent = 'copied!';
+      setTimeout(() => btn.textContent = 'copy', 2000);
+    });
+  }
+
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('open');
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('open');
+  }
+</script>
+</body>
+</html>
